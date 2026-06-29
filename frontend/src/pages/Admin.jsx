@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { format, startOfWeek, addDays, addWeeks, subWeeks } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-const API = '/api'
+import API_BASE from '../api'
+const API = API_BASE
 
 export default function Admin() {
   const [autentifie, setAuthentifie] = useState(false)

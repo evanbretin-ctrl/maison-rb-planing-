@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { format, addDays, startOfToday } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
-const API = '/api'
+import API_BASE from '../api'
+const API = API_BASE
 
 const ETAPES = ['Service', 'Créneau', 'Coordonnées', 'Confirmation']
 
