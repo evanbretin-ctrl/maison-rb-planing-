@@ -7,7 +7,9 @@ from zoneinfo import ZoneInfo
 PARIS = ZoneInfo("Europe/Paris")
 from uuid import UUID
 import os
-import resend
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from app.database import get_db
 from app import models, schemas
@@ -22,35 +24,43 @@ def format_date_fr(dt):
     return f"{JOURS[d.weekday()]} {d.day} {MOIS_FR[d.month-1]} {d.year} à {d.strftime('%H:%M')}"
 
 
+def send_brevo(to: str, subject: str, html: str):
+    api_key = os.getenv("BREVO_API_KEY", "")
+    expediteur = os.getenv("EXPEDITEUR_EMAIL", "noreply@maisonrb.fr")
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"Maison RB <{expediteur}>"
+    msg["To"] = to
+    msg.attach(MIMEText(html, "html"))
+    with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+        server.starttls()
+        server.login(expediteur, api_key)
+        server.sendmail(expediteur, to, msg.as_string())
+
+
 def send_email_annulation(reservation: models.Reservation, service: models.Service):
-    resend.api_key = os.getenv("RESEND_API_KEY", "")
     debut_str = format_date_fr(reservation.debut)
-    resend.Emails.send({
-        "from": "Maison RB <onboarding@resend.dev>",
-        "to": reservation.client_email,
-        "subject": "Annulation de votre réservation - Maison RB",
-        "html": f"""
+    send_brevo(
+        to=reservation.client_email,
+        subject="Annulation de votre réservation - Maison RB",
+        html=f"""
         <h2>Votre réservation a été annulée</h2>
         <p>Bonjour {reservation.client_nom},</p>
         <p>Votre rendez-vous pour <strong>{service.nom}</strong> prévu le <strong>{debut_str}</strong> a été annulé.</p>
         <p>N'hésitez pas à reprendre rendez-vous en ligne.</p>
         <p>À bientôt chez Maison RB !</p>
         """,
-    })
+    )
 
 
 def send_emails(reservation: models.Reservation, service: models.Service):
-    resend.api_key = os.getenv("RESEND_API_KEY", "")
     coiffeur_email = os.getenv("COIFFEUR_EMAIL", "")
-    frontend_url = os.getenv("FRONTEND_URL", "")
-
     debut_str = format_date_fr(reservation.debut)
 
-    resend.Emails.send({
-        "from": "Maison RB <onboarding@resend.dev>",
-        "to": coiffeur_email,
-        "subject": f"Nouvelle réservation - {reservation.client_nom}",
-        "html": f"""
+    send_brevo(
+        to=coiffeur_email,
+        subject=f"Nouvelle réservation - {reservation.client_nom}",
+        html=f"""
         <h2>Nouvelle réservation</h2>
         <p><strong>Client :</strong> {reservation.client_nom}</p>
         <p><strong>Email :</strong> {reservation.client_email}</p>
@@ -58,19 +68,18 @@ def send_emails(reservation: models.Reservation, service: models.Service):
         <p><strong>Service :</strong> {service.nom} ({service.duree_min} min)</p>
         <p><strong>Date :</strong> {debut_str}</p>
         """,
-    })
+    )
 
-    resend.Emails.send({
-        "from": "Maison RB <onboarding@resend.dev>",
-        "to": reservation.client_email,
-        "subject": "Confirmation de votre réservation - Maison RB",
-        "html": f"""
+    send_brevo(
+        to=reservation.client_email,
+        subject="Confirmation de votre réservation - Maison RB",
+        html=f"""
         <h2>Votre réservation est confirmée !</h2>
         <p>Bonjour {reservation.client_nom},</p>
         <p>Votre rendez-vous pour <strong>{service.nom}</strong> est confirmé le <strong>{debut_str}</strong>.</p>
         <p>À bientôt chez Maison RB !</p>
         """,
-    })
+    )
 
 
 @router.get("/creneaux", response_model=List[schemas.Creneau])
