@@ -1,0 +1,30 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #1a1a1a;
+  --white: #fafafa;
+  --gold: #b8963e;
+  --gold-light: #d4b06a;
+  --gray: #6b6b6b;
+  --gray-light: #e8e8e8;
+  --radius: 8px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+body {
+  font-family: 'Georgia', serif;
+  background: var(--white);
+  color: var(--black);
+  min-height: 100vh;
+}
+
+h1, h2, h3 { font-weight: normal; }
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
