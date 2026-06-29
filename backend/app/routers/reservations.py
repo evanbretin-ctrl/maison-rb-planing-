@@ -21,7 +21,7 @@ def send_email_annulation(reservation: models.Reservation, service: models.Servi
     resend.api_key = os.getenv("RESEND_API_KEY", "")
     debut_str = reservation.debut.strftime("%A %d %B %Y à %H:%M")
     resend.Emails.send({
-        "from": "Maison RB <noreply@maisonrb.fr>",
+        "from": "Maison RB <onboarding@resend.dev>",
         "to": reservation.client_email,
         "subject": "Annulation de votre réservation - Maison RB",
         "html": f"""
@@ -42,7 +42,7 @@ def send_emails(reservation: models.Reservation, service: models.Service):
     debut_str = reservation.debut.strftime("%A %d %B %Y à %H:%M")
 
     resend.Emails.send({
-        "from": "Maison RB <noreply@maisonrb.fr>",
+        "from": "Maison RB <onboarding@resend.dev>",
         "to": coiffeur_email,
         "subject": f"Nouvelle réservation - {reservation.client_nom}",
         "html": f"""
@@ -56,7 +56,7 @@ def send_emails(reservation: models.Reservation, service: models.Service):
     })
 
     resend.Emails.send({
-        "from": "Maison RB <noreply@maisonrb.fr>",
+        "from": "Maison RB <onboarding@resend.dev>",
         "to": reservation.client_email,
         "subject": "Confirmation de votre réservation - Maison RB",
         "html": f"""
