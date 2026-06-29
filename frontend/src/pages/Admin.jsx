@@ -100,7 +100,7 @@ function Dashboard() {
     <div style={styles.dashboard}>
       <aside style={styles.sidebar}>
         <h2 style={styles.sidebarTitre}>Maison RB</h2>
-        {['agenda', 'services', 'blocages'].map(o => (
+        {['agenda', 'services', 'blocages', 'horaires'].map(o => (
           <button key={o} style={{ ...styles.navBtn, ...(onglet === o ? styles.navBtnActive : {}) }} onClick={() => setOnglet(o)}>
             {o.charAt(0).toUpperCase() + o.slice(1)}
           </button>
@@ -195,7 +195,90 @@ function Dashboard() {
             </div>
           </div>
         )}
+
+        {/* HORAIRES */}
+        {onglet === 'horaires' && (
+          <GestionHoraires horaires={horaires} onUpdated={fetchHoraires} />
+        )}
       </main>
+    </div>
+  )
+}
+
+function GestionHoraires({ horaires, onUpdated }) {
+  const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
+
+  const getHoraire = (jourIdx) => horaires.find(h => h.jour_semaine === jourIdx)
+
+  const toggle = async (jourIdx) => {
+    const h = getHoraire(jourIdx)
+    if (h) {
+      await fetch(`${API}/horaires/${h.id}`, { method: 'DELETE' })
+    } else {
+      await fetch(`${API}/horaires/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jour_semaine: jourIdx, heure_debut: '09:00:00', heure_fin: '19:00:00', actif: true }),
+      })
+    }
+    onUpdated()
+  }
+
+  const updateHeure = async (h, field, value) => {
+    await fetch(`${API}/horaires/${h.id}`, { method: 'DELETE' })
+    await fetch(`${API}/horaires/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jour_semaine: h.jour_semaine,
+        heure_debut: field === 'heure_debut' ? value + ':00' : h.heure_debut,
+        heure_fin: field === 'heure_fin' ? value + ':00' : h.heure_fin,
+        actif: true,
+      }),
+    })
+    onUpdated()
+  }
+
+  return (
+    <div>
+      <h2 style={styles.sectionTitle}>Horaires d'ouverture</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {JOURS.map((nom, idx) => {
+          const h = getHoraire(idx)
+          return (
+            <div key={idx} style={{ ...styles.serviceItem, alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
+                <span style={{ fontFamily: 'sans-serif', fontSize: '0.9rem', minWidth: 80, color: h ? '#1a1a1a' : '#bbb' }}>{nom}</span>
+                {h ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="time"
+                      style={styles.inputSm}
+                      value={h.heure_debut.slice(0, 5)}
+                      onChange={e => updateHeure(h, 'heure_debut', e.target.value)}
+                    />
+                    <span style={{ fontFamily: 'sans-serif', fontSize: '0.8rem', color: '#6b6b6b' }}>→</span>
+                    <input
+                      type="time"
+                      style={styles.inputSm}
+                      value={h.heure_fin.slice(0, 5)}
+                      onChange={e => updateHeure(h, 'heure_fin', e.target.value)}
+                    />
+                  </div>
+                ) : (
+                  <span style={{ fontFamily: 'sans-serif', fontSize: '0.8rem', color: '#bbb' }}>Fermé</span>
+                )}
+              </div>
+              <button
+                style={{ ...styles.toggleBtn, ...(h ? styles.toggleBtnActif : styles.toggleBtnInactif) }}
+                onClick={() => toggle(idx)}
+              >
+                {h ? 'Ouvert' : 'Fermé'}
+              </button>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

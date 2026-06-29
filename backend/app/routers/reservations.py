@@ -14,6 +14,23 @@ router = APIRouter(prefix="/reservations", tags=["reservations"])
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 
 
+def send_email_annulation(reservation: models.Reservation, service: models.Service):
+    resend.api_key = os.getenv("RESEND_API_KEY", "")
+    debut_str = reservation.debut.strftime("%A %d %B %Y à %H:%M")
+    resend.Emails.send({
+        "from": "Maison RB <noreply@maisonrb.fr>",
+        "to": reservation.client_email,
+        "subject": "Annulation de votre réservation - Maison RB",
+        "html": f"""
+        <h2>Votre réservation a été annulée</h2>
+        <p>Bonjour {reservation.client_nom},</p>
+        <p>Votre rendez-vous pour <strong>{service.nom}</strong> prévu le <strong>{debut_str}</strong> a été annulé.</p>
+        <p>N'hésitez pas à reprendre rendez-vous en ligne.</p>
+        <p>À bientôt chez Maison RB !</p>
+        """,
+    })
+
+
 def send_emails(reservation: models.Reservation, service: models.Service):
     resend.api_key = os.getenv("RESEND_API_KEY", "")
     coiffeur_email = os.getenv("COIFFEUR_EMAIL", "")
@@ -176,7 +193,13 @@ def annuler_reservation(reservation_id: UUID, db: Session = Depends(get_db)):
     reservation = db.query(models.Reservation).filter(models.Reservation.id == reservation_id).first()
     if not reservation:
         raise HTTPException(status_code=404, detail="Réservation non trouvée")
+    service = db.query(models.Service).filter(models.Service.id == reservation.service_id).first()
     reservation.statut = "annulee"
     db.commit()
     db.refresh(reservation)
+    try:
+        if service:
+            send_email_annulation(reservation, service)
+    except Exception:
+        pass
     return reservation
