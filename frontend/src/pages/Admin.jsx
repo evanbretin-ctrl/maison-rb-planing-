@@ -209,11 +209,16 @@ function GestionHoraires({ horaires, onUpdated }) {
   const JOURS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche']
 
   const getHoraire = (jourIdx) => horaires.find(h => h.jour_semaine === jourIdx)
+  const getHoraires = (jourIdx) => horaires.filter(h => h.jour_semaine === jourIdx)
+
+  const deleteAllForDay = async (jourIdx) => {
+    await Promise.all(getHoraires(jourIdx).map(h => fetch(`${API}/horaires/${h.id}`, { method: 'DELETE' })))
+  }
 
   const toggle = async (jourIdx) => {
     const h = getHoraire(jourIdx)
     if (h) {
-      await fetch(`${API}/horaires/${h.id}`, { method: 'DELETE' })
+      await deleteAllForDay(jourIdx)
     } else {
       await fetch(`${API}/horaires/`, {
         method: 'POST',
@@ -225,7 +230,7 @@ function GestionHoraires({ horaires, onUpdated }) {
   }
 
   const updateHeure = async (h, field, value) => {
-    await fetch(`${API}/horaires/${h.id}`, { method: 'DELETE' })
+    await deleteAllForDay(h.jour_semaine)
     await fetch(`${API}/horaires/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
