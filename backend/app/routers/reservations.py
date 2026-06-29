@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from uuid import UUID
 import os
 import resend
@@ -71,8 +71,8 @@ def get_creneaux(service_id: UUID, date_str: str, db: Session = Depends(get_db))
     if not horaire:
         return []
 
-    debut_journee = datetime.combine(jour, horaire.heure_debut)
-    fin_journee = datetime.combine(jour, horaire.heure_fin)
+    debut_journee = datetime.combine(jour, horaire.heure_debut, tzinfo=timezone.utc)
+    fin_journee = datetime.combine(jour, horaire.heure_fin, tzinfo=timezone.utc)
     duree = timedelta(minutes=service.duree_min)
 
     reservations_jour = db.query(models.Reservation).filter(
@@ -162,8 +162,8 @@ def list_reservations(date_str: str = None, db: Session = Depends(get_db)):
             jour = date.fromisoformat(date_str)
         except ValueError:
             raise HTTPException(status_code=400, detail="Format de date invalide")
-        debut_journee = datetime.combine(jour, datetime.min.time())
-        fin_journee = datetime.combine(jour, datetime.max.time())
+        debut_journee = datetime.combine(jour, datetime.min.time(), tzinfo=timezone.utc)
+        fin_journee = datetime.combine(jour, datetime.max.time(), tzinfo=timezone.utc)
         query = query.filter(
             models.Reservation.debut >= debut_journee,
             models.Reservation.debut <= fin_journee
