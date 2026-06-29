@@ -15,11 +15,16 @@ from app import models, schemas
 router = APIRouter(prefix="/reservations", tags=["reservations"])
 
 JOURS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+MOIS_FR = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"]
+
+def format_date_fr(dt):
+    d = dt.astimezone(PARIS)
+    return f"{JOURS[d.weekday()]} {d.day} {MOIS_FR[d.month-1]} {d.year} à {d.strftime('%H:%M')}"
 
 
 def send_email_annulation(reservation: models.Reservation, service: models.Service):
     resend.api_key = os.getenv("RESEND_API_KEY", "")
-    debut_str = reservation.debut.strftime("%A %d %B %Y à %H:%M")
+    debut_str = format_date_fr(reservation.debut)
     resend.Emails.send({
         "from": "Maison RB <onboarding@resend.dev>",
         "to": reservation.client_email,
@@ -39,7 +44,7 @@ def send_emails(reservation: models.Reservation, service: models.Service):
     coiffeur_email = os.getenv("COIFFEUR_EMAIL", "")
     frontend_url = os.getenv("FRONTEND_URL", "")
 
-    debut_str = reservation.debut.strftime("%A %d %B %Y à %H:%M")
+    debut_str = format_date_fr(reservation.debut)
 
     resend.Emails.send({
         "from": "Maison RB <onboarding@resend.dev>",
