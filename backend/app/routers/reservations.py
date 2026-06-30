@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta, date, timezone
 from zoneinfo import ZoneInfo
+import threading
 
 PARIS = ZoneInfo("Europe/Paris")
 from uuid import UUID
@@ -180,10 +181,7 @@ def create_reservation(data: schemas.ReservationCreate, db: Session = Depends(ge
     db.commit()
     db.refresh(reservation)
 
-    try:
-        send_emails(reservation, service)
-    except Exception:
-        pass  # Ne pas bloquer la réservation si l'email échoue
+    threading.Thread(target=lambda: send_emails(reservation, service), daemon=True).start()
 
     return reservation
 
