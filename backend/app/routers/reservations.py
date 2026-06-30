@@ -27,7 +27,8 @@ def format_date_fr(dt):
 
 def send_brevo(to: str, subject: str, html: str):
     api_key = os.getenv("BREVO_API_KEY", "")
-    expediteur = os.getenv("EXPEDITEUR_EMAIL", "noreply@maisonrb.fr")
+    brevo_login = os.getenv("BREVO_LOGIN", "")  # email du compte Brevo
+    expediteur = os.getenv("EXPEDITEUR_EMAIL", brevo_login)
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"Maison RB <{expediteur}>"
@@ -35,7 +36,7 @@ def send_brevo(to: str, subject: str, html: str):
     msg.attach(MIMEText(html, "html"))
     with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
         server.starttls()
-        server.login(expediteur, api_key)
+        server.login(brevo_login, api_key)
         server.sendmail(expediteur, to, msg.as_string())
 
 
@@ -138,9 +139,7 @@ def get_creneaux(service_id: UUID, date_str: str, db: Session = Depends(get_db))
                     conflit = True
                     break
 
-        if not conflit:
-            creneaux.append(schemas.Creneau(debut=slot_debut, fin=slot_fin))
-
+        creneaux.append(schemas.Creneau(debut=slot_debut, fin=slot_fin, disponible=not conflit))
         slot_debut += duree
 
     return creneaux

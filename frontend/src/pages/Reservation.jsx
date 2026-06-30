@@ -145,8 +145,13 @@ export default function Reservation() {
                 {creneaux.map(c => (
                   <button
                     key={c.debut}
-                    style={{ ...styles.creneauBtn, ...(creneauChoisi?.debut === c.debut ? styles.creneauBtnSelected : {}) }}
-                    onClick={() => setCreneauChoisi(c)}
+                    disabled={!c.disponible}
+                    style={{
+                      ...styles.creneauBtn,
+                      ...(creneauChoisi?.debut === c.debut ? styles.creneauBtnSelected : {}),
+                      ...(!c.disponible ? styles.creneauBtnPris : {}),
+                    }}
+                    onClick={() => c.disponible && setCreneauChoisi(c)}
                   >
                     {format(new Date(c.debut), 'HH:mm')}
                   </button>
@@ -248,6 +253,7 @@ const styles = {
   creneauxGrid: { display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '2rem' },
   creneauBtn: { padding: '0.6rem 1.2rem', background: '#fff', border: '2px solid #e8e8e8', borderRadius: 8, fontFamily: 'sans-serif', fontSize: '0.95rem', color: '#1a1a1a' },
   creneauBtnSelected: { borderColor: '#b8963e', background: '#fdf9f2', color: '#b8963e' },
+  creneauBtnPris: { background: '#f0f0f0', borderColor: '#e0e0e0', color: '#bbb', cursor: 'not-allowed', textDecoration: 'line-through' },
   loading: { textAlign: 'center', color: '#6b6b6b', fontFamily: 'sans-serif', padding: '2rem' },
   vide: { textAlign: 'center', color: '#6b6b6b', fontFamily: 'sans-serif', padding: '2rem' },
   recap: { background: '#f5f5f5', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1.5rem', fontFamily: 'sans-serif', fontSize: '0.9rem', color: '#1a1a1a' },

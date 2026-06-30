@@ -93,6 +93,7 @@ class ReservationOut(BaseModel):
 class Creneau(BaseModel):
     debut: datetime
     fin: datetime
+    disponible: bool = True
 
 
 # Auth admin
