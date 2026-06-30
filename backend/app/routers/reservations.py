@@ -11,9 +11,8 @@ logger = logging.getLogger(__name__)
 PARIS = ZoneInfo("Europe/Paris")
 from uuid import UUID
 import os
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import json
+import urllib.request
 
 from app.database import get_db
 from app import models, schemas
@@ -30,20 +29,23 @@ def format_date_fr(dt):
 
 def send_brevo(to: str, subject: str, html: str):
     api_key = os.getenv("BREVO_API_KEY", "")
-    brevo_login = os.getenv("BREVO_LOGIN", "b0613b001@smtp-brevo.com")
     expediteur = os.getenv("EXPEDITEUR_EMAIL", "evan.bretin@gmail.com")
-    logger.info(f"[EMAIL] Envoi à {to} depuis {expediteur} via {brevo_login}")
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = f"Maison RB <{expediteur}>"
-    msg["To"] = to
-    msg.attach(MIMEText(html, "html"))
+    logger.info(f"[EMAIL] Envoi à {to}")
+    payload = json.dumps({
+        "sender": {"name": "Maison RB", "email": expediteur},
+        "to": [{"email": to}],
+        "subject": subject,
+        "htmlContent": html
+    }).encode()
+    req = urllib.request.Request(
+        "https://api.brevo.com/v3/smtp/email",
+        data=payload,
+        headers={"api-key": api_key, "Content-Type": "application/json"},
+        method="POST"
+    )
     try:
-        with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
-            server.starttls()
-            server.login(brevo_login, api_key)
-            server.sendmail(expediteur, to, msg.as_string())
-        logger.info(f"[EMAIL] OK envoyé à {to}")
+        with urllib.request.urlopen(req) as r:
+            logger.info(f"[EMAIL] OK: {r.read().decode()}")
     except Exception as e:
         logger.error(f"[EMAIL] ERREUR: {e}")
 
