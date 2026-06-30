@@ -4,6 +4,9 @@ from typing import List
 from datetime import datetime, timedelta, date, timezone
 from zoneinfo import ZoneInfo
 import threading
+import logging
+
+logger = logging.getLogger(__name__)
 
 PARIS = ZoneInfo("Europe/Paris")
 from uuid import UUID
@@ -29,15 +32,20 @@ def send_brevo(to: str, subject: str, html: str):
     api_key = os.getenv("BREVO_API_KEY", "")
     brevo_login = os.getenv("BREVO_LOGIN", "b0613b001@smtp-brevo.com")
     expediteur = os.getenv("EXPEDITEUR_EMAIL", "evan.bretin@gmail.com")
+    logger.info(f"[EMAIL] Envoi à {to} depuis {expediteur} via {brevo_login}")
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"Maison RB <{expediteur}>"
     msg["To"] = to
     msg.attach(MIMEText(html, "html"))
-    with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
-        server.starttls()
-        server.login(brevo_login, api_key)
-        server.sendmail(expediteur, to, msg.as_string())
+    try:
+        with smtplib.SMTP("smtp-relay.brevo.com", 587) as server:
+            server.starttls()
+            server.login(brevo_login, api_key)
+            server.sendmail(expediteur, to, msg.as_string())
+        logger.info(f"[EMAIL] OK envoyé à {to}")
+    except Exception as e:
+        logger.error(f"[EMAIL] ERREUR: {e}")
 
 
 def send_email_annulation(reservation: models.Reservation, service: models.Service):
