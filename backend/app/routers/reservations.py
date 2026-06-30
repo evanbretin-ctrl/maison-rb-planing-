@@ -27,8 +27,8 @@ def format_date_fr(dt):
 
 def send_brevo(to: str, subject: str, html: str):
     api_key = os.getenv("BREVO_API_KEY", "")
-    brevo_login = os.getenv("BREVO_LOGIN", "")  # email du compte Brevo
-    expediteur = os.getenv("EXPEDITEUR_EMAIL", brevo_login)
+    brevo_login = os.getenv("BREVO_LOGIN", "b0613b001@smtp-brevo.com")
+    expediteur = os.getenv("EXPEDITEUR_EMAIL", "evan.bretin@gmail.com")
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"Maison RB <{expediteur}>"
